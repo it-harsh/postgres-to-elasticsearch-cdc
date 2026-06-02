@@ -4,7 +4,7 @@ spring:
 
   # WRITE PATH — PostgreSQL is the source of truth for all writes
   datasource:
-    url: jdbc:postgresql://localhost:5432/ticketdb
+    url: jdbc:postgresql://localhost:5434/ticketdb
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
@@ -34,6 +34,10 @@ spring:
         spring.json.use.type.headers: "false"
         # Debezium events are raw JSON — deserialize as JsonNode for flexible parsing
         spring.json.value.default.type: "com.fasterxml.jackson.databind.JsonNode"
+        max.poll.records: "500"
+    listener:
+      # Batch mode: receive up to 500 records per poll → saveAll() in one ES HTTP call
+      type: batch
 
   # Async thread pool for background bulk generation
   task:
@@ -41,6 +45,9 @@ spring:
       pool:
         core-size: 2
         max-size: 4
+
+server:
+  port: 8081
 
 logging:
   level:
