@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: cdc-poc
+
+  # WRITE PATH — PostgreSQL is the source of truth for all writes
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ticketdb
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # READ PATH — Elasticsearch handles all search queries via inverted index
+  elasticsearch:
+    uris: http://localhost:9200
+
+  # CDC SYNC — Kafka consumer processes Debezium change events
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: cdc-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: "false"
+        # Debezium events are raw JSON — deserialize as JsonNode for flexible parsing
+        spring.json.value.default.type: "com.fasterxml.jackson.databind.JsonNode"
+
+  # Async thread pool for background bulk generation
+  task:
+    execution:
+      pool:
+        core-size: 2
+        max-size: 4
+
+logging:
+  level:
+    com.poc.cdc: INFO
+    org.springframework.kafka: WARN
+    org.elasticsearch.client: WARN
